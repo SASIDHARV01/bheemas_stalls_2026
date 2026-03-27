@@ -8,7 +8,7 @@ import { db } from '../firebase';
 
 const menuData = {
   biryani: [
-    { id: 'b1', category: 'Dum Biryani Section', name: '1 Dum Biryani', price: 230, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/dum-biryani.jpg' },
+    { id: 'b1', category: 'Dum Biryani Section', name: '1 Dum Biryani', price: 1, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/dum-biryani.jpg' },
     { id: 'b2', category: 'Dum Biryani Section', name: '3 Dum Biryani', price: 690, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + ANY Fruit Juice FREE', image: '/images/dum-biryani.jpg' },
     { id: 'b3', category: 'Dum Biryani Section', name: '5 Dum Biryani', price: 1250, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + FREE Dum Biryani', image: '/images/dum-biryani.jpg' },
     { id: 'b4', category: 'Fry Piece Biryani', name: '1 Fry Biryani', price: 249, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/fry-biryani.jpg' },
