@@ -6,7 +6,6 @@ const StallList = () => {
     { id: 'biryani', name: "Bheema's Biryani", desc: 'Authentic Dum Biryani', icon: ChefHat, color: 'bg-orange-600' },
     { id: 'fastfood', name: "Bheema's Fast Food", desc: 'Noodles & Manchurian', icon: Pizza, color: 'bg-red-600' },
     { id: 'soda', name: "Bheema's Soda", desc: 'Fizzy & Refreshing', icon: CupSoda, color: 'bg-blue-600' },
-    { id: 'cooldrinks', name: "Bheema's Cooldrinks", desc: 'Chilled Beverages', icon: Coffee, color: 'bg-cyan-600' },
     { id: 'fruitjuice', name: "Bheema's Fruit Juice", desc: 'Fresh & Healthy', icon: Droplet, color: 'bg-green-600' },
     { id: 'shawarma', name: "Bheema's Shawarma", desc: 'Juicy Roasted Chicken', icon: Drumstick, color: 'bg-yellow-600' },
   ];
