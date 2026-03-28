@@ -2,16 +2,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, CheckCircle, Minus, Plus, Trash2, AlertCircle, UploadCloud } from 'lucide-react'; 
+import { ArrowLeft, CheckCircle, Minus, Plus, Trash2, AlertCircle } from 'lucide-react'; 
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // 👉 NEW: Storage Imports
-import { db, storage } from '../firebase'; // 👉 NEW: Bring in storage
+import { db } from '../firebase'; 
 import emailjs from '@emailjs/browser';
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart, updateQuantity, removeFromCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState(""); // 👉 NEW: Tracks upload progress
+  const [uploadStatus, setUploadStatus] = useState(""); 
   const [orderId, setOrderId] = useState(null);
   const [errorPopup, setErrorPopup] = useState(""); 
   
@@ -19,7 +18,7 @@ const CheckoutPage = () => {
     name: '', phone: '', email: '', utr: ''
   });
   
-  const [paymentProof, setPaymentProof] = useState(null); // 👉 NEW: Stores the image file
+  const [paymentProof, setPaymentProof] = useState(null);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -34,7 +33,7 @@ const CheckoutPage = () => {
     setErrorPopup(""); 
     
     try {
-      // 1. Check for Duplicate UTR
+      // 1. Check for Duplicate UTR First
       setUploadStatus("Checking UTR...");
       const utrQuery = query(collection(db, "orders"), where("customerDetails.utr", "==", formData.utr));
       const duplicateCheck = await getDocs(utrQuery);
@@ -46,14 +45,23 @@ const CheckoutPage = () => {
         return; 
       }
 
-      // 2. Upload the Screenshot to Firebase Storage
+      // 👉 2. Upload Screenshot to ImgBB
       setUploadStatus("Uploading payment proof...");
-      const fileExtension = paymentProof.name.split('.').pop();
-      const fileName = `proofs/${formData.utr}_${Date.now()}.${fileExtension}`;
-      const storageRef = ref(storage, fileName);
+      const imgData = new FormData();
+      imgData.append('image', paymentProof);
+
+      const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`, {
+        method: 'POST',
+        body: imgData
+      });
       
-      const uploadResult = await uploadBytes(storageRef, paymentProof);
-      const proofUrl = await getDownloadURL(uploadResult.ref); // Get the live image URL
+      const imgbbResult = await imgbbResponse.json();
+
+      if (!imgbbResult.success) {
+        throw new Error("Failed to upload image to ImgBB.");
+      }
+
+      const proofUrl = imgbbResult.data.url; // This is the live image link!
 
       // 3. Generate Order IDs
       setUploadStatus("Generating ticket...");
@@ -64,10 +72,10 @@ const CheckoutPage = () => {
       const verifyLink = `${window.location.origin}/admin/verify/${newOrderId}`;
       const ticketQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(verifyLink)}`;
 
-      // 4. Save to Database (Now includes proofUrl!)
+      // 4. Save to Firebase Database
       await addDoc(collection(db, "orders"), {
         orderId: newOrderId,
-        customerDetails: { ...formData, proofUrl }, // 👉 Saved here
+        customerDetails: { ...formData, proofUrl }, // 👉 Link saved perfectly
         items: cart,
         totalAmount: cartTotal,
         status: "Pending Verification",
@@ -91,7 +99,7 @@ const CheckoutPage = () => {
 
     } catch (error) {
       console.error("❌ ERROR: ", error);
-      setErrorPopup("Server error. Check your internet and try again.");
+      setErrorPopup(error.message || "Server error. Check your internet and try again.");
     } finally {
       setIsSubmitting(false);
       setUploadStatus("");
@@ -104,19 +112,12 @@ const CheckoutPage = () => {
         <CheckCircle size={80} className="text-green-500 mb-6" />
         <h1 className="text-4xl md:text-5xl font-black text-white mb-2">Order Confirmed!</h1>
         <p className="text-gray-400 text-lg mb-8">Please take a screenshot of this page.</p>
-        
         <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl mb-8 w-full max-w-sm shadow-[0_0_40px_rgba(220,38,38,0.15)]">
           <p className="text-sm text-gray-500 uppercase tracking-widest mb-2">Your Order ID</p>
           <p className="text-5xl font-black text-red-500">{orderId}</p>
         </div>
-
-        <p className="text-gray-400 mb-8 max-w-md">
-          A confirmation email with your ticket has been sent to <span className="text-white font-bold">{formData.email}</span>.
-        </p>
-        
-        <Link to="/stalls" className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200 transition-colors">
-          Return to Menu
-        </Link>
+        <p className="text-gray-400 mb-8 max-w-md">A confirmation email with your ticket has been sent to <span className="text-white font-bold">{formData.email}</span>.</p>
+        <Link to="/stalls" className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200 transition-colors">Return to Menu</Link>
       </div>
     );
   }
@@ -125,9 +126,7 @@ const CheckoutPage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
         <h1 className="text-3xl font-bold text-white mb-4">Your cart is empty</h1>
-        <Link to="/stalls" className="text-red-500 hover:text-red-400 font-medium flex items-center gap-2">
-          <ArrowLeft size={20} /> Go back to stalls
-        </Link>
+        <Link to="/stalls" className="text-red-500 hover:text-red-400 font-medium flex items-center gap-2"><ArrowLeft size={20} /> Go back to stalls</Link>
       </div>
     );
   }
@@ -144,17 +143,13 @@ const CheckoutPage = () => {
             <AlertCircle size={56} className="text-red-500 mx-auto mb-4" />
             <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Upload Error</h3>
             <p className="text-gray-400 mb-8 leading-relaxed">{errorPopup}</p>
-            <button onClick={() => setErrorPopup("")} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-transform active:scale-95 uppercase tracking-widest text-lg">
-              Try Again
-            </button>
+            <button onClick={() => setErrorPopup("")} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-transform active:scale-95 uppercase tracking-widest text-lg">Try Again</button>
           </div>
         </div>
       )}
 
       <div className="flex items-center gap-4 mb-10">
-        <Link to="/stalls" className="bg-neutral-900 p-3 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 shrink-0">
-          <ArrowLeft size={24} className="text-white" />
-        </Link>
+        <Link to="/stalls" className="bg-neutral-900 p-3 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 shrink-0"><ArrowLeft size={24} className="text-white" /></Link>
         <div className="flex items-center gap-3 md:gap-4">
           <img src="/bheemas-logo.png" alt="Bheemas Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.3)] shrink-0" />
           <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">Checkout</h1>
@@ -215,29 +210,18 @@ const CheckoutPage = () => {
           <div className="bg-neutral-900 p-6 md:p-8 rounded-2xl border border-neutral-800">
             <h2 className="text-xl font-bold text-white mb-2">Step 2: Verify Payment</h2>
             
-            {/* 👉 NEW: UTR INPUT */}
             <p className="text-gray-400 text-sm mb-2 mt-6">1. Enter 12-Digit UTR Number</p>
             <input required type="text" name="utr" onChange={handleChange} placeholder="e.g. 312345678901" minLength="12" maxLength="12"
               className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none tracking-widest font-mono text-center mb-6" />
 
-            {/* 👉 NEW: IMAGE UPLOAD FIELD */}
             <p className="text-gray-400 text-sm mb-2">2. Upload Payment Screenshot</p>
             <div className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 mb-8 flex items-center">
-              <input 
-                required 
-                type="file" 
-                accept="image/*" 
-                onChange={(e) => setPaymentProof(e.target.files[0])}
-                className="w-full text-white file:mr-4 file:py-3 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-red-500/10 file:text-red-500 hover:file:bg-red-500/20 file:cursor-pointer outline-none cursor-pointer" 
-              />
+              <input required type="file" accept="image/*" onChange={(e) => setPaymentProof(e.target.files[0])}
+                className="w-full text-white file:mr-4 file:py-3 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-red-500/10 file:text-red-500 hover:file:bg-red-500/20 file:cursor-pointer outline-none cursor-pointer" />
             </div>
 
             <button type="submit" disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-transform active:scale-95 disabled:bg-neutral-800 disabled:text-gray-500 shadow-[0_4px_20px_rgba(220,38,38,0.4)] text-lg uppercase tracking-widest flex items-center justify-center gap-2">
-              {isSubmitting ? (
-                 <>{uploadStatus || "Processing..."}</>
-              ) : (
-                "Place Order"
-              )}
+              {isSubmitting ? <>{uploadStatus || "Processing..."}</> : "Place Order"}
             </button>
           </div>
         </div>
