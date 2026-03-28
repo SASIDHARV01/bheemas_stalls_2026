@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, CheckCircle, Minus, Plus, Trash2, AlertCircle } from 'lucide-react'; 
+import { ArrowLeft, CheckCircle, Minus, Plus, Trash2, AlertCircle, Smartphone } from 'lucide-react'; 
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase'; 
 import emailjs from '@emailjs/browser';
@@ -20,6 +20,10 @@ const CheckoutPage = () => {
   
   const [paymentProof, setPaymentProof] = useState(null);
 
+  // 🚨 IMPORTANT: If PhonePe blocks this, you MUST change this to a Business/Merchant UPI ID
+  const targetUpiId = "6301041236@axl"; 
+  const merchantName = "Bheemas Syndicate";
+
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
@@ -33,7 +37,6 @@ const CheckoutPage = () => {
     setErrorPopup(""); 
     
     try {
-      // 1. Check for Duplicate UTR First
       setUploadStatus("Checking UTR...");
       const utrQuery = query(collection(db, "orders"), where("customerDetails.utr", "==", formData.utr));
       const duplicateCheck = await getDocs(utrQuery);
@@ -45,7 +48,6 @@ const CheckoutPage = () => {
         return; 
       }
 
-      // 👉 2. Upload Screenshot to ImgBB
       setUploadStatus("Uploading payment proof...");
       const imgData = new FormData();
       imgData.append('image', paymentProof);
@@ -61,9 +63,8 @@ const CheckoutPage = () => {
         throw new Error("Failed to upload image to ImgBB.");
       }
 
-      const proofUrl = imgbbResult.data.url; // This is the live image link!
+      const proofUrl = imgbbResult.data.url; 
 
-      // 3. Generate Order IDs
       setUploadStatus("Generating ticket...");
       const timestampHex = Date.now().toString(36).toUpperCase();
       const randomHex = Math.floor(Math.random() * 46656).toString(36).padStart(3, '0').toUpperCase();
@@ -72,17 +73,15 @@ const CheckoutPage = () => {
       const verifyLink = `${window.location.origin}/admin/verify/${newOrderId}`;
       const ticketQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(verifyLink)}`;
 
-      // 4. Save to Firebase Database
       await addDoc(collection(db, "orders"), {
         orderId: newOrderId,
-        customerDetails: { ...formData, proofUrl }, // 👉 Link saved perfectly
+        customerDetails: { ...formData, proofUrl }, 
         items: cart,
         totalAmount: cartTotal,
         status: "Pending Verification",
         timestamp: serverTimestamp() 
       });
 
-      // 5. Send Email
       setUploadStatus("Sending email...");
       const templateParams = {
         to_name: formData.name,
@@ -131,8 +130,12 @@ const CheckoutPage = () => {
     );
   }
 
-  const upiLink = `upi://pay?pa=6301041236@axl&pn=Bheemas%20Syndicate&am=${cartTotal}&cu=INR`;
-  const paymentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+  // 👉 THE MAGIC UPI INTENT LINK
+  // tr = transaction reference (adds legitimacy)
+  // tn = transaction note (shows up in their app)
+  const transactionRef = `BHM${Date.now()}`;
+  const upiIntentLink = `upi://pay?pa=${targetUpiId}&pn=${encodeURIComponent(merchantName)}&tr=${transactionRef}&tn=Fest%20Order&am=${cartTotal}&cu=INR`;
+  const paymentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiIntentLink)}`;
 
   return (
     <div className="min-h-screen py-10 px-4 max-w-6xl mx-auto relative">
@@ -141,7 +144,7 @@ const CheckoutPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
           <div className="bg-neutral-900 border border-red-500/50 p-6 md:p-8 rounded-3xl w-full max-w-sm text-center shadow-[0_0_40px_rgba(220,38,38,0.2)]">
             <AlertCircle size={56} className="text-red-500 mx-auto mb-4" />
-            <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Upload Error</h3>
+            <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Error</h3>
             <p className="text-gray-400 mb-8 leading-relaxed">{errorPopup}</p>
             <button onClick={() => setErrorPopup("")} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-transform active:scale-95 uppercase tracking-widest text-lg">Try Again</button>
           </div>
@@ -198,13 +201,20 @@ const CheckoutPage = () => {
         <div className="space-y-6">
           <div className="bg-neutral-900 p-6 md:p-8 rounded-2xl border border-neutral-800 text-center flex flex-col items-center">
             <h2 className="text-xl font-bold text-white mb-2">Step 1: Pay for Order</h2>
-            <p className="text-gray-400 text-sm mb-6">Scan with any UPI app to pay exactly ₹{cartTotal}</p>
+            <p className="text-gray-400 text-sm mb-6">Pay exactly <span className="text-white font-bold">₹{cartTotal}</span> using the QR code or button below.</p>
+            
             <div className="bg-white p-3 rounded-xl mb-6 shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center">
               <img src={paymentQrUrl} alt="Scan to pay" className="w-40 h-40" />
             </div>
-            <a href={upiLink} className="md:hidden w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl mb-6 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
-              Open UPI App to Pay ₹{cartTotal}
+
+            {/* 👉 THE DEEP LINK BUTTON */}
+            <a 
+              href={upiIntentLink} 
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl mb-4 transition-transform active:scale-95 flex items-center justify-center gap-2 text-lg shadow-lg shadow-blue-500/20"
+            >
+              <Smartphone size={24} /> Pay via UPI Apps
             </a>
+            <p className="text-xs text-gray-500 text-left w-full mt-2">After paying, you MUST return to this screen to complete your order.</p>
           </div>
 
           <div className="bg-neutral-900 p-6 md:p-8 rounded-2xl border border-neutral-800">

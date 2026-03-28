@@ -8,26 +8,26 @@ import { db } from '../firebase';
 
 const menuData = {
   biryani: [
-    { id: 'b1', category: 'Dum Biryani Section', name: '1 Dum Biryani', price: 1, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/dum-biryani.jpg' },
-    { id: 'b2', category: 'Dum Biryani Section', name: '3 Dum Biryani', price: 690, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + ANY Fruit Juice FREE', image: '/images/dum-biryani.jpg' },
-    { id: 'b3', category: 'Dum Biryani Section', name: '5 Dum Biryani', price: 1250, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + FREE Dum Biryani', image: '/images/dum-biryani.jpg' },
-    { id: 'b4', category: 'Fry Piece Biryani', name: '1 Fry Biryani', price: 249, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/fry-biryani.jpg' },
-    { id: 'b5', category: 'Fry Piece Biryani', name: '3 Fry Biryani', price: 749, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + ANY Fruit Juice FREE', image: '/images/fry-biryani.jpg' },
-    { id: 'b6', category: 'Fry Piece Biryani', name: '5 Fry Biryani', price: 1249, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + FREE Dum Biryani', image: '/images/fry-biryani.jpg' },
-    { id: 'b7', category: 'Combo', name: '1 Fry Biryani Combo', price: 249, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/fry-combo.jpg' }
+    { id: 'b1', category: 'Dum Biryani Section', name: 'Dum Biryani(2 Piece)+1 Cool Drink', price: 230, type: 'Non-Veg', desc: '2 Pieces + 1 Cool Drink', image: '/b1.jpeg' },
+    { id: 'b2', category: 'Dum Biryani Section', name: 'Dum Biryani(2 Piece)+ Any 1 Fruit Juice', price: 240, type: 'Non-Veg', desc: '2 Pieces + Any 1 Fruit Juice', image: '/2bj.jpeg' },
+    { id: 'b4', category: 'Fry Piece Biryani', name: 'Fry Biryani(2 Pieces) + 1 Cool Drink', price: 250, type: 'Non-Veg', desc: '2 Pieces + 1 Cool Drink', image: '/b1.jpeg' },
+    { id: 'b5', category: 'Fry Piece Biryani', name: 'Fry Biryani(2 Piece)+ Any 1 Fruit Juice', price: 260, type: 'Non-Veg', desc: 'Fry Biryani(2 Piece)+ Any 1 Fruit Juice', image: '/2bj.jpeg' },
+    { id: 'b7', category: 'Combo', name: 'Combo Biryani 1', price: 260, type: 'Non-Veg', desc: '1 Fry + 1 Dum Piece', image: '/c1.jpeg' },
+    { id: 'b7', category: 'Combo', name: 'Combo Biryani 2', price: 700, type: 'Non-Veg', desc: '3-2Piece Dum Biryani + 1-1 Piece Biryani Free', image: '/images/fry-combo.jpg' },
+    { id: 'b7', category: 'Combo', name: 'Combo Biryani 3', price: 1250, type: 'Non-Veg', desc: '3-2Piece Dum Biryani + 1-2Piece Biryani + Any 2 Fruit Juices Free', image: '/images/fry-combo.jpg' }
   ],
   fruitjuice: [
-    { id: 'j1', category: 'Juice Section', name: 'Banana Juice', price: 70, type: 'Drink', desc: 'Fresh & Creamy', image: '/images/banana.jpg' },
-    { id: 'j2', category: 'Juice Section', name: 'Musk Melon Juice', price: 80, type: 'Drink', desc: 'Refreshing summer cooler', image: '/images/muskmelon.jpg' },
-    { id: 'j3', category: 'Juice Section', name: 'Pineapple Juice', price: 80, type: 'Drink', desc: 'Sweet and tangy', image: '/images/pineapple.jpg' },
-    { id: 'j4', category: 'Juice Section', name: 'Watermelon Juice', price: 70, type: 'Drink', desc: 'Hydrating fresh juice', image: '/images/watermelon.jpg' },
-    { id: 'j5', category: 'Juice Section', name: 'Grape Juice', price: 80, type: 'Drink', desc: 'Rich grape flavor', image: '/images/grape.jpg' },
-    { id: 'j6', category: 'Salads Section', name: 'Fruit Salad', price: 50, type: 'Veg', desc: 'Mixed seasonal fruits', image: '/images/salad.jpg' },
-    { id: 'j7', category: 'ThickShakes', name: 'Oreo Shake', price: 110, type: 'Drink', desc: 'Classic crushed Oreo blend', image: '/images/oreo.jpg' },
-    { id: 'j8', category: 'ThickShakes', name: 'Kit-Kat Shake', price: 110, type: 'Drink', desc: 'Chocolatey wafer goodness', image: '/images/kitkat.jpg' },
-    { id: 'j9', category: 'ThickShakes', name: 'Pista Shake', price: 120, type: 'Drink', desc: 'Premium pistachio blend', image: '/images/pista.jpg' },
-    { id: 'j10', category: 'ThickShakes', name: 'Chocolate Cake Shake', price: 120, type: 'Drink', desc: 'Rich cake blended shake', image: '/images/chocolate.jpg' },
-    { id: 'j11', category: 'ThickShakes', name: 'Butterscotch Shake', price: 120, type: 'Drink', desc: 'Caramel crunch delight', image: '/images/butterscotch.jpg' }
+    { id: 'j1', category: 'Juice Section', name: 'Banana Juice', price: 70, type: 'Drink', desc: 'Fresh & Creamy', image: '/banana.jpg' },
+    { id: 'j2', category: 'Juice Section', name: 'Musk Melon Juice', price: 80, type: 'Drink', desc: 'Refreshing summer cooler', image: '/muskmelon.jpg' },
+    { id: 'j3', category: 'Juice Section', name: 'Pineapple Juice', price: 80, type: 'Drink', desc: 'Sweet and tangy', image: '/pineapple.jpeg' },
+    { id: 'j4', category: 'Juice Section', name: 'Watermelon Juice', price: 70, type: 'Drink', desc: 'Hydrating fresh juice', image: '/watermelon.avif' },
+    { id: 'j5', category: 'Juice Section', name: 'Grape Juice', price: 80, type: 'Drink', desc: 'Rich grape flavor', image: '/grapejuice.jpeg' },
+    { id: 'j6', category: 'Salads Section', name: 'Fruit Salad', price: 50, type: 'Veg', desc: 'Mixed seasonal fruits', image: '/salad.jpg' },
+    { id: 'j7', category: 'ThickShakes', name: 'Oreo Shake', price: 110, type: 'Drink', desc: 'Classic crushed Oreo blend', image: '/oreoshake.jpg' },
+    { id: 'j8', category: 'ThickShakes', name: 'Kit-Kat Shake', price: 110, type: 'Drink', desc: 'Chocolatey wafer goodness', image: '/kitkat.jpg' },
+    { id: 'j9', category: 'ThickShakes', name: 'Pista Shake', price: 120, type: 'Drink', desc: 'Premium pistachio blend', image: '/pista.webp' },
+    { id: 'j10', category: 'ThickShakes', name: 'Chocolate Cake Shake', price: 120, type: 'Drink', desc: 'Rich cake blended shake', image: '/chocolate.jpg' },
+    { id: 'j11', category: 'ThickShakes', name: 'Vanilla Shake', price: 110, type: 'Drink', desc: 'Rich Flavoured delight', image: '/vanilla.jpeg' }
   ],
   fastfood: [
     { id: 'f1', category: 'Noodles', name: 'Chicken Noodles', price: 100, type: 'Non-Veg', desc: 'Spicy wok-tossed noodles.', image: '/images/noodles.jpg' },
