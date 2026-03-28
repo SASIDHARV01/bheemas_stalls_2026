@@ -74,7 +74,8 @@ const MenuPage = () => {
         </Link>
         <div className="flex items-center gap-3 md:gap-4">
           <img 
-            src="/bheemas-logo.png" 
+            src="/logo.jpeg
+            " 
             alt="Bheemas Logo" 
             className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] shrink-0" 
           />

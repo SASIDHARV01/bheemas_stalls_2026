@@ -3,31 +3,27 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { Lock, CheckCircle, AlertTriangle, ArrowLeft, XCircle } from 'lucide-react';
+import { Lock, CheckCircle, AlertTriangle, ArrowLeft, XCircle, Image as ImageIcon } from 'lucide-react';
 
 const SECRET_PIN = "2026";
 
 const VerifyPage = () => {
-  const { id } = useParams(); // Gets the BHM-XXXXX from the URL
+  const { id } = useParams(); 
   const navigate = useNavigate();
   
-  // Security State
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('adminAuth') === 'true');
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
 
-  // Order Data State
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Only fetch the order IF they are authenticated
     if (!isAuthenticated) return;
 
     const fetchOrder = async () => {
       try {
-        // Query Firebase for this specific Order ID
         const q = doc(db, "orders", id);
         const docSnap = await getDoc(q);
 
@@ -59,7 +55,7 @@ const VerifyPage = () => {
   };
 
   const markAsCompleted = async () => {
-    if (!window.confirm("Did you check the UTR on your PhonePe?")) return;
+    if (!window.confirm("Did you check the UTR and Screenshot?")) return;
     
     try {
       const orderRef = doc(db, "orders", id);
@@ -70,7 +66,6 @@ const VerifyPage = () => {
     }
   };
 
-  // --- UI RENDER: THE SECURITY LOCK ---
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 animate-fade-in-up">
@@ -82,10 +77,8 @@ const VerifyPage = () => {
           <p className="text-gray-400 text-sm mb-8">Enter PIN to verify this ticket.</p>
           
           <form onSubmit={handleLogin} className="space-y-4">
-            <input 
-              type="password" maxLength="4" placeholder="••••" value={pinInput} onChange={(e) => setPinInput(e.target.value)}
-              className={`w-full bg-neutral-950 border ${pinError ? 'border-red-500' : 'border-neutral-800'} text-white text-center text-3xl tracking-[1em] py-4 rounded-xl focus:border-red-500 outline-none font-mono transition-colors`}
-            />
+            <input type="password" maxLength="4" placeholder="••••" value={pinInput} onChange={(e) => setPinInput(e.target.value)}
+              className={`w-full bg-neutral-950 border ${pinError ? 'border-red-500' : 'border-neutral-800'} text-white text-center text-3xl tracking-[1em] py-4 rounded-xl focus:border-red-500 outline-none font-mono transition-colors`} />
             {pinError && <p className="text-red-500 text-xs font-bold uppercase tracking-widest animate-pulse">Incorrect PIN.</p>}
             <button type="submit" className="w-full bg-white text-black font-black py-4 rounded-xl uppercase tracking-widest hover:bg-gray-200 transition-colors mt-2">Unlock</button>
           </form>
@@ -94,7 +87,6 @@ const VerifyPage = () => {
     );
   }
 
-  // --- UI RENDER: THE TICKET DATA ---
   if (loading) return <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-white">Searching Database...</div>;
   
   if (error) return (
@@ -111,7 +103,6 @@ const VerifyPage = () => {
   return (
     <div className="min-h-screen bg-neutral-950 p-4 py-10 flex flex-col items-center">
       <div className="w-full max-w-lg">
-        
         <Link to="/admin" className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors w-fit">
           <ArrowLeft size={20} /> Back to Scanner
         </Link>
@@ -136,7 +127,25 @@ const VerifyPage = () => {
             <div className="bg-neutral-950 border border-yellow-500/30 rounded-xl p-6 mb-6 text-center">
               <span className="text-yellow-500 text-sm font-bold uppercase tracking-widest mb-2 block">Check PhonePe UTR</span>
               <span className="text-white font-mono text-3xl tracking-widest block">{order.customerDetails?.utr}</span>
-              <p className="text-gray-500 text-xs mt-3">Name: {order.customerDetails?.name}</p>
+              <p className="text-gray-500 text-xs mt-3 mb-6">Name: {order.customerDetails?.name}</p>
+
+              {/* 👉 NEW: PAYMENT SCREENSHOT VIEWER */}
+              <div className="border-t border-neutral-800 pt-6">
+                <span className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
+                  <ImageIcon size={16} /> Payment Proof
+                </span>
+                
+                {order.customerDetails?.proofUrl ? (
+                  <a href={order.customerDetails.proofUrl} target="_blank" rel="noreferrer" className="block w-full max-w-[250px] mx-auto rounded-xl overflow-hidden border-2 border-neutral-800 hover:border-blue-500 transition-colors shadow-lg">
+                    <img src={order.customerDetails.proofUrl} alt="Payment Proof" className="w-full h-auto object-cover" />
+                  </a>
+                ) : (
+                  <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl text-sm font-bold">
+                    No screenshot uploaded for this order!
+                  </div>
+                )}
+                <p className="text-gray-600 text-[10px] mt-3 uppercase tracking-wider">Tap image to view full screen</p>
+              </div>
             </div>
 
             <div className="mb-8">

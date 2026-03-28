@@ -1,13 +1,22 @@
-import { Link } from 'react-router-dom';
+// src/components/GlobalCart.jsx
+import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart, ChevronRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const GlobalCart = () => {
   const { cart, cartTotal } = useCart();
+  const location = useLocation();
   
   const itemCount = cart.reduce((total, item) => total + item.qty, 0);
 
-  if (itemCount === 0) return null; 
+  // 👉 THE KILL SWITCH: Destroy cart if empty, on checkout, or on any admin page
+  if (
+    itemCount === 0 || 
+    location.pathname.includes('/checkout') || 
+    location.pathname.includes('/admin')
+  ) {
+    return null; 
+  }
 
   return (
     // On mobile: fixed to the absolute bottom, full width. On desktop: floating bottom right.

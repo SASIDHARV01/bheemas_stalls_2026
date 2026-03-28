@@ -151,7 +151,7 @@ const CheckoutPage = () => {
       <div className="flex items-center gap-4 mb-10">
         <Link to="/stalls" className="bg-neutral-900 p-3 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 shrink-0"><ArrowLeft size={24} className="text-white" /></Link>
         <div className="flex items-center gap-3 md:gap-4">
-          <img src="/bheemas-logo.png" alt="Bheemas Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.3)] shrink-0" />
+          <img src="/logo.jpeg" alt="Bheemas Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.3)] shrink-0" />
           <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">Checkout</h1>
         </div>
       </div>
