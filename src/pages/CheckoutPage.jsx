@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, CheckCircle, Minus, Plus, Trash2, AlertCircle, Copy } from 'lucide-react'; 
+import { ArrowLeft, CheckCircle, Minus, Plus, Trash2, AlertCircle, Copy, QrCode } from 'lucide-react'; 
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase'; 
 import emailjs from '@emailjs/browser';
@@ -159,9 +159,9 @@ const CheckoutPage = () => {
         <div className="space-y-6">
           {/* STEP 1: DETAILS */}
           <div className="bg-neutral-900 p-6 rounded-3xl border border-neutral-800 shadow-xl">
-            <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tighter italic text-red-500">1. Student Details</h2>
+            <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">1. Student Details</h2>
             <div className="space-y-4">
-              <input required type="text" name="name" onChange={handleChange} placeholder="FULL NAME" className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none font-bold placeholder:text-neutral-700" />
+              <input required type="text" name="name" onChange={handleChange} placeholder="FULL NAME" className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none font-bold placeholder:text-neutral-700 uppercase" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input required type="tel" name="phone" onChange={handleChange} placeholder="PHONE NUMBER" className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none font-bold placeholder:text-neutral-700" />
                 <input required type="email" name="email" onChange={handleChange} placeholder="EMAIL ADDRESS" className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none font-bold placeholder:text-neutral-700" />
@@ -171,7 +171,7 @@ const CheckoutPage = () => {
 
           {/* STEP 2: SUMMARY WITH EDITING CONTROLS */}
           <div className="bg-neutral-900 p-6 rounded-3xl border border-neutral-800 shadow-xl">
-            <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tighter italic text-red-500">Order Summary</h2>
+            <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">Order Summary</h2>
             <div className="space-y-4 mb-6">
               {cart.map((item) => (
                 <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-neutral-950 p-4 rounded-2xl border border-neutral-800 gap-4">
@@ -180,7 +180,6 @@ const CheckoutPage = () => {
                     <p className="text-red-500 font-black">₹{item.price * item.qty}</p>
                   </div>
                   
-                  {/* 👉 THE + / - / TRASH CONTROLS RE-ADDED */}
                   <div className="flex items-center gap-3 bg-neutral-900 p-1.5 rounded-xl border border-neutral-800 w-fit">
                     <button type="button" onClick={() => updateQuantity(item.id, -1)} disabled={item.qty <= 1} className="p-2 text-gray-400 hover:text-white disabled:opacity-30 transition-colors">
                       <Minus size={18} />
@@ -205,15 +204,27 @@ const CheckoutPage = () => {
         </div>
 
         <div className="space-y-6">
-          {/* STEP 3: PAYMENT */}
+          {/* STEP 3: PAYMENT WITH QR NOTE */}
           <div className="bg-neutral-900 p-8 rounded-3xl border border-neutral-800 text-center shadow-xl">
-            <h2 className="text-xl font-black text-white mb-4 uppercase tracking-tighter italic text-red-500">3. Payment</h2>
-            <div className="bg-white p-3 rounded-2xl mb-6 inline-block shadow-2xl">
+            <h2 className="text-xl font-black text-white mb-4 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">2. Payment</h2>
+            
+            <div className="bg-white p-3 rounded-2xl mb-6 inline-block shadow-2xl relative group">
               <img src={paymentQrUrl} alt="QR" className="w-44 h-44" />
+              <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
+                 <QrCode className="text-black" size={32} />
+              </div>
+            </div>
+
+            {/* 👉 THE NEW PRO-TIP NOTE */}
+            <div className="bg-red-600/10 border border-red-600/30 p-4 rounded-2xl mb-6 text-left">
+              <p className="text-red-500 font-black text-[10px] uppercase tracking-widest italic mb-1">PRO-TIP: BEST WAY TO PAY</p>
+              <p className="text-gray-400 font-bold text-xs leading-relaxed uppercase italic">
+                SCAN THE <span className="text-white">QR CODE</span> FROM A FRIEND'S PHONE OR YOUR GALLERY FOR A 100% SECURE & SUCCESSFUL PAYMENT.
+              </p>
             </div>
             
             <div className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex flex-col gap-3">
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest text-left">COPY UPI ID TO PAY MANUALLY</p>
+              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest text-left">OR COPY UPI ID TO PAY MANUALLY</p>
               <div className="flex justify-between items-center gap-4">
                 <span className="text-white font-black font-mono text-lg tracking-wider truncate">{targetUpiId}</span>
                 <button type="button" onClick={handleCopy} className={`shrink-0 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 ${copied ? 'bg-green-600 text-white' : 'bg-white text-black hover:bg-gray-200 shadow-lg'}`}>
@@ -225,16 +236,16 @@ const CheckoutPage = () => {
 
           {/* STEP 4: VERIFY */}
           <div className="bg-neutral-900 p-8 rounded-3xl border border-neutral-800 shadow-xl">
-            <h2 className="text-xl font-black text-white mb-8 uppercase tracking-tighter italic text-red-500">4. Verification</h2>
+            <h2 className="text-xl font-black text-white mb-8 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">3. Verification</h2>
             <div className="space-y-6">
               <div>
-                <label className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 block">ENTER 12-DIGIT UTR NUMBER</label>
+                <label className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 block italic">ENTER 12-DIGIT UTR NUMBER</label>
                 <input required type="text" name="utr" onChange={handleChange} placeholder="31XXXXXXXXXX" minLength="12" maxLength="12"
                   className="w-full bg-neutral-950 border border-neutral-800 text-white p-5 rounded-2xl focus:border-red-500 outline-none text-center font-black text-xl tracking-[0.2em] placeholder:tracking-normal placeholder:text-neutral-800" />
               </div>
 
               <div>
-                <label className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 block">UPLOAD SCREENSHOT</label>
+                <label className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 block italic">UPLOAD SCREENSHOT</label>
                 <div className="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
                   <input required type="file" accept="image/*" onChange={(e) => setPaymentProof(e.target.files[0])}
                     className="w-full text-white text-xs font-black uppercase file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-red-600 file:text-white cursor-pointer" />
