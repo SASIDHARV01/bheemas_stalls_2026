@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { doc, onSnapshot } from 'firebase/firestore'; // 👉 NEW: Firebase imports
+import { doc, onSnapshot } from 'firebase/firestore'; 
 import { db } from '../firebase';
 
 const menuData = {
   biryani: [
-    { id: 'b1', category: 'Dum Biryani Section', name: '1 Dum Biryani', price: 1, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/dum-biryani.jpg' },
+    { id: 'b1', category: 'Dum Biryani Section', name: '1 Dum Biryani', price: 230, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/dum-biryani.jpg' },
     { id: 'b2', category: 'Dum Biryani Section', name: '3 Dum Biryani', price: 690, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + ANY Fruit Juice FREE', image: '/images/dum-biryani.jpg' },
     { id: 'b3', category: 'Dum Biryani Section', name: '5 Dum Biryani', price: 1250, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg + FREE Dum Biryani', image: '/images/dum-biryani.jpg' },
     { id: 'b4', category: 'Fry Piece Biryani', name: '1 Fry Biryani', price: 249, type: 'Non-Veg', desc: '2 Pieces + FREE Masala Egg', image: '/images/fry-biryani.jpg' },
@@ -39,11 +39,8 @@ const MenuPage = () => {
   const { stallId } = useParams();
   const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // 👉 NEW: State to hold sold out items from Firebase
   const [soldOutItems, setSoldOutItems] = useState([]);
 
-  // 👉 NEW: Listen to the secret "settings" document in real-time
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "settings", "menu"), (docSnap) => {
       if (docSnap.exists()) {
@@ -69,14 +66,23 @@ const MenuPage = () => {
 
   return (
     <div className="min-h-screen py-8 px-4 max-w-5xl mx-auto relative pb-40">
+      
+      {/* 👉 NEW: Menu Header with Logo */}
       <div className="flex items-center gap-4 mb-6">
-        <Link to="/stalls" className="bg-neutral-900 p-3 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 shadow-lg">
+        <Link to="/stalls" className="bg-neutral-900 p-3 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 shadow-lg shrink-0">
           <ArrowLeft size={24} className="text-white" />
         </Link>
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-black text-white leading-tight">
-            BHEEMA'S <span className="text-red-500 uppercase">{stallName}</span>
-          </h1>
+        <div className="flex items-center gap-3 md:gap-4">
+          <img 
+            src="/bheemas-logo.png" 
+            alt="Bheemas Logo" 
+            className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)] shrink-0" 
+          />
+          <div>
+            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight">
+              BHEEMA'S <span className="text-red-500 uppercase block sm:inline">{stallName}</span>
+            </h1>
+          </div>
         </div>
       </div>
 
@@ -115,7 +121,6 @@ const MenuPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {categoryItems.map((item) => {
-                // 👉 NEW: Check if this specific item is sold out!
                 const isSoldOut = soldOutItems.includes(item.id);
 
                 return (
@@ -130,7 +135,6 @@ const MenuPage = () => {
                         <p className="text-gray-400 text-xs sm:text-sm leading-relaxed line-clamp-2 mb-4">{item.desc}</p>
                       </div>
                       
-                      {/* 👉 NEW: Dynamic Button (Red if active, Gray if sold out) */}
                       <button 
                         onClick={() => !isSoldOut && addToCart(item)}
                         disabled={isSoldOut}

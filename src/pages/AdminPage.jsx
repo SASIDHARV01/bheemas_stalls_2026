@@ -2,13 +2,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../firebase';
-import { LayoutDashboard, CheckCircle, Clock, Search, IndianRupee, QrCode, X, Camera, Lock, Package } from 'lucide-react';
+import { CheckCircle, Clock, Search, IndianRupee, QrCode, X, Camera, Lock, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner'; 
 
 const SECRET_PIN = "2026"; 
 
-// 👉 NEW: We put the menu list here so the Admin panel knows what items exist
 const menuData = {
   biryani: [
     { id: 'b1', name: '1 Dum Biryani' }, { id: 'b2', name: '3 Dum Biryani' }, { id: 'b3', name: '5 Dum Biryani' },
@@ -31,7 +30,7 @@ const AdminPage = () => {
   const [pinError, setPinError] = useState(false);
 
   const [orders, setOrders] = useState([]);
-  const [soldOutItems, setSoldOutItems] = useState([]); // 👉 NEW: Holds the Sold Out item IDs
+  const [soldOutItems, setSoldOutItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [manualId, setManualId] = useState(""); 
@@ -43,7 +42,6 @@ const AdminPage = () => {
   useEffect(() => {
     if (!isAuthenticated) return; 
 
-    // 1. Listen for Live Orders & Ring the Bell
     const q = query(collection(db, "orders"), orderBy("timestamp", "desc"));
     const unsubOrders = onSnapshot(q, (snapshot) => {
       if (!isFirstLoad.current) {
@@ -60,7 +58,6 @@ const AdminPage = () => {
       isFirstLoad.current = false; 
     });
 
-    // 2. Listen for Live Inventory (Sold Out items)
     const unsubInventory = onSnapshot(doc(db, "settings", "menu"), (docSnap) => {
       if (docSnap.exists()) {
         setSoldOutItems(docSnap.data().outOfStock || []);
@@ -116,7 +113,6 @@ const AdminPage = () => {
     }
   };
 
-  // 👉 NEW: Function to flip the switch in Firebase
   const toggleInventory = async (itemId, isCurrentlySoldOut) => {
     const menuRef = doc(db, "settings", "menu");
     try {
@@ -124,11 +120,10 @@ const AdminPage = () => {
         outOfStock: isCurrentlySoldOut ? arrayRemove(itemId) : arrayUnion(itemId)
       }, { merge: true });
     } catch (error) {
-      alert("Failed to update inventory. Make sure your Firebase security rules allow writing to the 'settings' collection.");
+      alert("Failed to update inventory. Make sure your Firebase security rules allow writing.");
     }
   };
 
-  // --- UI RENDER START ---
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4 animate-fade-in-up">
@@ -138,13 +133,10 @@ const AdminPage = () => {
           </div>
           <h1 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Restricted Area</h1>
           <p className="text-gray-400 text-sm mb-8">Enter admin passcode to access the command center.</p>
-          
           <form onSubmit={handleLogin} className="space-y-4">
-            <input 
-              type="password" maxLength="4" placeholder="••••" value={pinInput} onChange={(e) => setPinInput(e.target.value)}
-              className={`w-full bg-neutral-950 border ${pinError ? 'border-red-500' : 'border-neutral-800'} text-white text-center text-3xl tracking-[1em] py-4 rounded-xl focus:border-red-500 outline-none font-mono transition-colors`}
-            />
-            {pinError && <p className="text-red-500 text-xs font-bold uppercase tracking-widest animate-pulse">Access Denied. Incorrect PIN.</p>}
+            <input type="password" maxLength="4" placeholder="••••" value={pinInput} onChange={(e) => setPinInput(e.target.value)}
+              className={`w-full bg-neutral-950 border ${pinError ? 'border-red-500' : 'border-neutral-800'} text-white text-center text-3xl tracking-[1em] py-4 rounded-xl focus:border-red-500 outline-none font-mono transition-colors`} />
+            {pinError && <p className="text-red-500 text-xs font-bold uppercase tracking-widest animate-pulse">Access Denied.</p>}
             <button type="submit" className="w-full bg-white text-black font-black py-4 rounded-xl uppercase tracking-widest hover:bg-gray-200 transition-colors mt-2">Unlock</button>
           </form>
         </div>
@@ -167,7 +159,6 @@ const AdminPage = () => {
   return (
     <div className="min-h-screen bg-neutral-950 p-4 md:p-8 font-sans pb-20 relative">
       
-      {/* Scanner Overlay */}
       {showScanner && (
         <div className="fixed inset-0 z-50 bg-black flex flex-col animate-fade-in-up">
           <div className="p-6 flex justify-between items-center bg-neutral-950 border-b border-neutral-800">
@@ -182,18 +173,21 @@ const AdminPage = () => {
         </div>
       )}
 
-      {/* Header */}
+      {/* 👉 NEW: Admin Header with Logo */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-neutral-800 pb-6">
         <div className="flex items-center gap-4">
-          <div className="bg-red-500/10 p-4 rounded-2xl border border-red-500/20"><LayoutDashboard size={36} className="text-red-500" /></div>
+          <img 
+            src="/bheemas-logo.png" 
+            alt="Bheemas Logo" 
+            className="w-14 h-14 md:w-16 md:h-16 rounded-2xl object-cover border-2 border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)] shrink-0" 
+          />
           <div>
             <h1 className="text-3xl font-black text-white tracking-tight uppercase">Command Center</h1>
-            <p className="text-gray-400">Live POS & Verification</p>
+            <p className="text-red-400 font-bold tracking-widest text-xs uppercase mt-1">Bheema's Syndicate Live POS</p>
           </div>
         </div>
       </div>
 
-      {/* Quick Scan Hub */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 md:p-8 mb-10 shadow-[0_0_40px_rgba(220,38,38,0.05)]">
         <div className="flex flex-col md:flex-row gap-8 items-center justify-between">
           <div className="flex-1 w-full flex flex-col items-center md:items-start text-center md:text-left">
@@ -213,7 +207,6 @@ const AdminPage = () => {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
         <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl flex flex-col justify-center">
           <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-2">Active Orders</p>
@@ -235,7 +228,6 @@ const AdminPage = () => {
         <h2 className="text-2xl font-black text-white uppercase tracking-wider">Kitchen Queue</h2>
       </div>
 
-      {/* Orders Grid */}
       {activeOrders.length === 0 ? (
         <div className="bg-neutral-900 border border-neutral-800 border-dashed rounded-3xl p-12 text-center text-gray-500 mb-16">
           <CheckCircle size={48} className="mx-auto mb-4 opacity-50" />
@@ -276,7 +268,6 @@ const AdminPage = () => {
         </div>
       )}
 
-      {/* 👉 NEW: INVENTORY CONTROL PANEL */}
       <div className="flex items-center gap-3 mb-6 mt-16 border-t border-neutral-800 pt-16">
         <Package className="text-blue-500" size={24} />
         <h2 className="text-2xl font-black text-white uppercase tracking-wider">Inventory Control</h2>
@@ -308,7 +299,6 @@ const AdminPage = () => {
           ))}
         </div>
       </div>
-
     </div>
   );
 };
