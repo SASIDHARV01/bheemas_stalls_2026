@@ -2,43 +2,80 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, CheckCircle, Minus, Plus, Trash2 } from 'lucide-react'; 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase'; 
+import { ArrowLeft, CheckCircle, Minus, Plus, Trash2, AlertCircle, UploadCloud } from 'lucide-react'; 
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // 👉 NEW: Storage Imports
+import { db, storage } from '../firebase'; // 👉 NEW: Bring in storage
 import emailjs from '@emailjs/browser';
 
 const CheckoutPage = () => {
   const { cart, cartTotal, clearCart, updateQuantity, removeFromCart } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState(""); // 👉 NEW: Tracks upload progress
   const [orderId, setOrderId] = useState(null);
+  const [errorPopup, setErrorPopup] = useState(""); 
   
   const [formData, setFormData] = useState({
     name: '', phone: '', email: '', utr: ''
   });
+  
+  const [paymentProof, setPaymentProof] = useState(null); // 👉 NEW: Stores the image file
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!paymentProof) {
+      setErrorPopup("Please upload a screenshot of your payment proof.");
+      return;
+    }
+
     setIsSubmitting(true);
+    setErrorPopup(""); 
     
-    const timestampHex = Date.now().toString(36).toUpperCase();
-    const randomHex = Math.floor(Math.random() * 46656).toString(36).padStart(3, '0').toUpperCase();
-    const newOrderId = `BHM-${timestampHex}-${randomHex}`;
-
-    const verifyLink = `${window.location.origin}/admin/verify/${newOrderId}`;
-    const ticketQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(verifyLink)}`;
-
     try {
+      // 1. Check for Duplicate UTR
+      setUploadStatus("Checking UTR...");
+      const utrQuery = query(collection(db, "orders"), where("customerDetails.utr", "==", formData.utr));
+      const duplicateCheck = await getDocs(utrQuery);
+
+      if (!duplicateCheck.empty) {
+        setErrorPopup("This UTR number has already been used! Please enter a valid, new 12-digit UTR.");
+        setIsSubmitting(false);
+        setUploadStatus("");
+        return; 
+      }
+
+      // 2. Upload the Screenshot to Firebase Storage
+      setUploadStatus("Uploading payment proof...");
+      const fileExtension = paymentProof.name.split('.').pop();
+      const fileName = `proofs/${formData.utr}_${Date.now()}.${fileExtension}`;
+      const storageRef = ref(storage, fileName);
+      
+      const uploadResult = await uploadBytes(storageRef, paymentProof);
+      const proofUrl = await getDownloadURL(uploadResult.ref); // Get the live image URL
+
+      // 3. Generate Order IDs
+      setUploadStatus("Generating ticket...");
+      const timestampHex = Date.now().toString(36).toUpperCase();
+      const randomHex = Math.floor(Math.random() * 46656).toString(36).padStart(3, '0').toUpperCase();
+      const newOrderId = `BHM-${timestampHex}-${randomHex}`;
+
+      const verifyLink = `${window.location.origin}/admin/verify/${newOrderId}`;
+      const ticketQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(verifyLink)}`;
+
+      // 4. Save to Database (Now includes proofUrl!)
       await addDoc(collection(db, "orders"), {
         orderId: newOrderId,
-        customerDetails: formData,
+        customerDetails: { ...formData, proofUrl }, // 👉 Saved here
         items: cart,
         totalAmount: cartTotal,
         status: "Pending Verification",
         timestamp: serverTimestamp() 
       });
 
+      // 5. Send Email
+      setUploadStatus("Sending email...");
       const templateParams = {
         to_name: formData.name,
         to_email: formData.email, 
@@ -47,21 +84,17 @@ const CheckoutPage = () => {
         ticket_qr: ticketQrUrl 
       };
 
-      await emailjs.send(
-        'service_axc3q8h', 
-        'template_2bve1qj', 
-        templateParams,
-        '99v-QBIUfCSIHFudd'
-      );
+      await emailjs.send('service_axc3q8h', 'template_2bve1qj', templateParams, '99v-QBIUfCSIHFudd');
 
       setOrderId(newOrderId);
       clearCart();
 
     } catch (error) {
       console.error("❌ ERROR: ", error);
-      alert("Something went wrong with the order. Please try again.");
+      setErrorPopup("Server error. Check your internet and try again.");
     } finally {
       setIsSubmitting(false);
+      setUploadStatus("");
     }
   };
 
@@ -103,19 +136,27 @@ const CheckoutPage = () => {
   const paymentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
 
   return (
-    <div className="min-h-screen py-10 px-4 max-w-6xl mx-auto">
+    <div className="min-h-screen py-10 px-4 max-w-6xl mx-auto relative">
       
-      {/* 👉 NEW: Checkout Header with Logo */}
+      {errorPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up">
+          <div className="bg-neutral-900 border border-red-500/50 p-6 md:p-8 rounded-3xl w-full max-w-sm text-center shadow-[0_0_40px_rgba(220,38,38,0.2)]">
+            <AlertCircle size={56} className="text-red-500 mx-auto mb-4" />
+            <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Upload Error</h3>
+            <p className="text-gray-400 mb-8 leading-relaxed">{errorPopup}</p>
+            <button onClick={() => setErrorPopup("")} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-transform active:scale-95 uppercase tracking-widest text-lg">
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-4 mb-10">
         <Link to="/stalls" className="bg-neutral-900 p-3 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 shrink-0">
           <ArrowLeft size={24} className="text-white" />
         </Link>
         <div className="flex items-center gap-3 md:gap-4">
-          <img 
-            src="/bheemas-logo.png" 
-            alt="Bheemas Logo" 
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.3)] shrink-0" 
-          />
+          <img src="/bheemas-logo.png" alt="Bheemas Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border border-red-500 shadow-[0_0_10px_rgba(220,38,38,0.3)] shrink-0" />
           <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">Checkout</h1>
         </div>
       </div>
@@ -125,13 +166,10 @@ const CheckoutPage = () => {
           <div className="bg-neutral-900 p-6 md:p-8 rounded-2xl border border-neutral-800">
             <h2 className="text-2xl font-bold text-white mb-4">Student Details</h2>
             <div className="space-y-4">
-              <input required type="text" name="name" onChange={handleChange} placeholder="Full Name" 
-                className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none" />
+              <input required type="text" name="name" onChange={handleChange} placeholder="Full Name" className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input required type="tel" name="phone" onChange={handleChange} placeholder="Phone Number" 
-                  className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none" />
-                <input required type="email" name="email" onChange={handleChange} placeholder="Email Address" 
-                  className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none" />
+                <input required type="tel" name="phone" onChange={handleChange} placeholder="Phone Number" className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none" />
+                <input required type="email" name="email" onChange={handleChange} placeholder="Email Address" className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none" />
               </div>
             </div>
           </div>
@@ -146,17 +184,11 @@ const CheckoutPage = () => {
                     <p className="text-red-400 font-black text-sm">₹{item.price * item.qty}</p>
                   </div>
                   <div className="flex items-center gap-2 bg-neutral-900 p-1 rounded-lg border border-neutral-800 w-fit">
-                    <button type="button" onClick={() => updateQuantity(item.id, -1)} disabled={item.qty <= 1} className="p-2 text-gray-400 hover:text-white disabled:opacity-30 transition-colors">
-                      <Minus size={16} />
-                    </button>
+                    <button type="button" onClick={() => updateQuantity(item.id, -1)} disabled={item.qty <= 1} className="p-2 text-gray-400 hover:text-white disabled:opacity-30"><Minus size={16} /></button>
                     <span className="text-white font-black w-4 text-center">{item.qty}</span>
-                    <button type="button" onClick={() => updateQuantity(item.id, 1)} className="p-2 text-gray-400 hover:text-white transition-colors">
-                      <Plus size={16} />
-                    </button>
+                    <button type="button" onClick={() => updateQuantity(item.id, 1)} className="p-2 text-gray-400 hover:text-white"><Plus size={16} /></button>
                     <div className="w-px h-6 bg-neutral-800 mx-1"></div>
-                    <button type="button" onClick={() => removeFromCart(item.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-md transition-colors">
-                      <Trash2 size={16} />
-                    </button>
+                    <button type="button" onClick={() => removeFromCart(item.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-md"><Trash2 size={16} /></button>
                   </div>
                 </div>
               ))}
@@ -175,19 +207,37 @@ const CheckoutPage = () => {
             <div className="bg-white p-3 rounded-xl mb-6 shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center">
               <img src={paymentQrUrl} alt="Scan to pay" className="w-40 h-40" />
             </div>
-            <a href={upiLink} className="md:hidden w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl mb-6 flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-blue-500/20">
+            <a href={upiLink} className="md:hidden w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl mb-6 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
               Open UPI App to Pay ₹{cartTotal}
             </a>
-            <p className="text-xs text-gray-500 text-left w-full">Make sure to copy the 12-digit UTR number from your app after paying!</p>
           </div>
 
           <div className="bg-neutral-900 p-6 md:p-8 rounded-2xl border border-neutral-800">
-            <h2 className="text-xl font-bold text-white mb-2">Step 2: Verify & Place Order</h2>
-            <p className="text-gray-400 text-sm mb-6">Paste the 12-digit UTR from your payment app below.</p>
-            <input required type="text" name="utr" onChange={handleChange} placeholder="Enter 12-Digit UTR Number" minLength="12" maxLength="12"
+            <h2 className="text-xl font-bold text-white mb-2">Step 2: Verify Payment</h2>
+            
+            {/* 👉 NEW: UTR INPUT */}
+            <p className="text-gray-400 text-sm mb-2 mt-6">1. Enter 12-Digit UTR Number</p>
+            <input required type="text" name="utr" onChange={handleChange} placeholder="e.g. 312345678901" minLength="12" maxLength="12"
               className="w-full bg-neutral-950 border border-neutral-800 text-white p-4 rounded-xl focus:border-red-500 outline-none tracking-widest font-mono text-center mb-6" />
+
+            {/* 👉 NEW: IMAGE UPLOAD FIELD */}
+            <p className="text-gray-400 text-sm mb-2">2. Upload Payment Screenshot</p>
+            <div className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-2 mb-8 flex items-center">
+              <input 
+                required 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => setPaymentProof(e.target.files[0])}
+                className="w-full text-white file:mr-4 file:py-3 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-red-500/10 file:text-red-500 hover:file:bg-red-500/20 file:cursor-pointer outline-none cursor-pointer" 
+              />
+            </div>
+
             <button type="submit" disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-transform active:scale-95 disabled:bg-neutral-800 disabled:text-gray-500 shadow-[0_4px_20px_rgba(220,38,38,0.4)] text-lg uppercase tracking-widest flex items-center justify-center gap-2">
-              {isSubmitting ? "Processing..." : "Place Order"}
+              {isSubmitting ? (
+                 <>{uploadStatus || "Processing..."}</>
+              ) : (
+                "Place Order"
+              )}
             </button>
           </div>
         </div>
