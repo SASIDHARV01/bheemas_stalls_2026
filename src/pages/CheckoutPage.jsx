@@ -1,4 +1,3 @@
-// src/pages/CheckoutPage.jsx
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -21,7 +20,8 @@ const CheckoutPage = () => {
   
   const [paymentProof, setPaymentProof] = useState(null);
 
-  const targetUpiId = "6301041236@axl"; 
+  const targetUpiId = "Q781041420@ybl";
+  const merchantName = "Bheemas Syndicate";
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -71,7 +71,26 @@ const CheckoutPage = () => {
       const randomHex = Math.floor(Math.random() * 46656).toString(36).padStart(3, '0').toUpperCase();
       const newOrderId = `BHM-${timestampHex}-${randomHex}`;
 
-      const verifyLink = `${window.location.origin}/admin/verify/${newOrderId}`;
+      // 👉 LOGIC: Identify all stalls in this order
+      const redemptionStatus = {};
+
+// We pre-fill all stalls. If they bought from it, it's false (pending). 
+// If they didn't, we don't include it in the status object at all.
+['biryani', 'fruitjuice', 'fastfood', 'soda'].forEach(stallKey => {
+  const hasItemFromThisStall = cart.some(item => {
+    if (stallKey === 'biryani') return item.id.startsWith('b');
+    if (stallKey === 'fruitjuice') return item.id.startsWith('j');
+    if (stallKey === 'fastfood') return item.id.startsWith('f');
+    if (stallKey === 'soda') return item.id.startsWith('s') || item.id.startsWith('m');
+    return false;
+  });
+
+  if (hasItemFromThisStall) {
+    redemptionStatus[stallKey] = false; // False = Not collected yet
+  }
+});
+
+      const verifyLink = `${window.location.origin}/verify/${newOrderId}`;
       const ticketQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(verifyLink)}`;
 
       await addDoc(collection(db, "orders"), {
@@ -80,6 +99,7 @@ const CheckoutPage = () => {
         items: cart,
         totalAmount: cartTotal,
         status: "Pending Verification",
+        redemptionStatus: redemptionStatus, // 👉 Added Multi-Stall Status
         timestamp: serverTimestamp() 
       });
 
@@ -128,11 +148,12 @@ const CheckoutPage = () => {
     );
   }
 
-  const paymentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${targetUpiId}&pn=Bheemas%20Syndicate&am=${cartTotal}&cu=INR`)}`;
+  const transactionRef = `BHM${Date.now()}`;
+  const upiLink = `upi://pay?pa=${targetUpiId}&pn=${encodeURIComponent(merchantName)}&am=${cartTotal}&cu=INR&mc=5411&tr=${transactionRef}`;
+  const paymentQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
 
   return (
     <div className="min-h-screen py-10 px-4 max-w-6xl mx-auto bg-neutral-950">
-      
       {errorPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="bg-neutral-900 border border-red-500 p-8 rounded-3xl w-full max-w-sm text-center shadow-2xl">
@@ -144,7 +165,6 @@ const CheckoutPage = () => {
         </div>
       )}
 
-      {/* HEADER */}
       <div className="flex items-center gap-4 mb-10 border-b border-neutral-800 pb-6">
         <Link to="/stalls" className="bg-neutral-900 p-3 rounded-full border border-neutral-800 hover:bg-neutral-800 transition-colors">
           <ArrowLeft size={24} className="text-white" />
@@ -157,7 +177,6 @@ const CheckoutPage = () => {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          {/* STEP 1: DETAILS */}
           <div className="bg-neutral-900 p-6 rounded-3xl border border-neutral-800 shadow-xl">
             <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">1. Student Details</h2>
             <div className="space-y-4">
@@ -169,7 +188,6 @@ const CheckoutPage = () => {
             </div>
           </div>
 
-          {/* STEP 2: SUMMARY WITH EDITING CONTROLS */}
           <div className="bg-neutral-900 p-6 rounded-3xl border border-neutral-800 shadow-xl">
             <h2 className="text-xl font-black text-white mb-6 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">Order Summary</h2>
             <div className="space-y-4 mb-6">
@@ -179,19 +197,12 @@ const CheckoutPage = () => {
                     <p className="text-white font-black text-sm uppercase tracking-tight italic">{item.name}</p>
                     <p className="text-red-500 font-black">₹{item.price * item.qty}</p>
                   </div>
-                  
                   <div className="flex items-center gap-3 bg-neutral-900 p-1.5 rounded-xl border border-neutral-800 w-fit">
-                    <button type="button" onClick={() => updateQuantity(item.id, -1)} disabled={item.qty <= 1} className="p-2 text-gray-400 hover:text-white disabled:opacity-30 transition-colors">
-                      <Minus size={18} />
-                    </button>
+                    <button type="button" onClick={() => updateQuantity(item.id, -1)} disabled={item.qty <= 1} className="p-2 text-gray-400 hover:text-white disabled:opacity-30 transition-colors"><Minus size={18} /></button>
                     <span className="text-white font-black text-lg w-6 text-center">{item.qty}</span>
-                    <button type="button" onClick={() => updateQuantity(item.id, 1)} className="p-2 text-gray-400 hover:text-white transition-colors">
-                      <Plus size={18} />
-                    </button>
+                    <button type="button" onClick={() => updateQuantity(item.id, 1)} className="p-2 text-gray-400 hover:text-white transition-colors"><Plus size={18} /></button>
                     <div className="w-px h-6 bg-neutral-800 mx-1"></div>
-                    <button type="button" onClick={() => removeFromCart(item.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
-                      <Trash2 size={18} />
-                    </button>
+                    <button type="button" onClick={() => removeFromCart(item.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 size={18} /></button>
                   </div>
                 </div>
               ))}
@@ -204,54 +215,40 @@ const CheckoutPage = () => {
         </div>
 
         <div className="space-y-6">
-          {/* STEP 3: PAYMENT WITH QR NOTE */}
           <div className="bg-neutral-900 p-8 rounded-3xl border border-neutral-800 text-center shadow-xl">
             <h2 className="text-xl font-black text-white mb-4 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">2. Payment</h2>
-            
             <div className="bg-white p-3 rounded-2xl mb-6 inline-block shadow-2xl relative group">
               <img src={paymentQrUrl} alt="QR" className="w-44 h-44" />
               <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center">
                  <QrCode className="text-black" size={32} />
               </div>
             </div>
-
-            {/* 👉 THE NEW PRO-TIP NOTE */}
             <div className="bg-red-600/10 border border-red-600/30 p-4 rounded-2xl mb-6 text-left">
               <p className="text-red-500 font-black text-[10px] uppercase tracking-widest italic mb-1">PRO-TIP: BEST WAY TO PAY</p>
-              <p className="text-gray-400 font-bold text-xs leading-relaxed uppercase italic">
-                SCAN THE <span className="text-white">QR CODE</span> FROM A FRIEND'S PHONE OR YOUR GALLERY FOR A 100% SECURE & SUCCESSFUL PAYMENT.
-              </p>
+              <p className="text-gray-400 font-bold text-xs leading-relaxed uppercase italic">SCAN THE <span className="text-white">QR CODE</span> FROM YOUR GALLERY OR A FRIEND'S PHONE FOR A 100% SECURE & SUCCESSFUL PAYMENT.</p>
             </div>
-            
             <div className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex flex-col gap-3">
               <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest text-left">OR COPY UPI ID TO PAY MANUALLY</p>
               <div className="flex justify-between items-center gap-4">
                 <span className="text-white font-black font-mono text-lg tracking-wider truncate">{targetUpiId}</span>
-                <button type="button" onClick={handleCopy} className={`shrink-0 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 ${copied ? 'bg-green-600 text-white' : 'bg-white text-black hover:bg-gray-200 shadow-lg'}`}>
-                  {copied ? "COPIED!" : "COPY ID"}
-                </button>
+                <button type="button" onClick={handleCopy} className={`shrink-0 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 ${copied ? 'bg-green-600 text-white' : 'bg-white text-black hover:bg-gray-200 shadow-lg'}`}>{copied ? "COPIED!" : "COPY ID"}</button>
               </div>
             </div>
           </div>
 
-          {/* STEP 4: VERIFY */}
           <div className="bg-neutral-900 p-8 rounded-3xl border border-neutral-800 shadow-xl">
             <h2 className="text-xl font-black text-white mb-8 uppercase tracking-tighter italic text-red-500 underline decoration-red-500/30 underline-offset-8">3. Verification</h2>
             <div className="space-y-6">
               <div>
                 <label className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 block italic">ENTER 12-DIGIT UTR NUMBER</label>
-                <input required type="text" name="utr" onChange={handleChange} placeholder="31XXXXXXXXXX" minLength="12" maxLength="12"
-                  className="w-full bg-neutral-950 border border-neutral-800 text-white p-5 rounded-2xl focus:border-red-500 outline-none text-center font-black text-xl tracking-[0.2em] placeholder:tracking-normal placeholder:text-neutral-800" />
+                <input required type="text" name="utr" onChange={handleChange} placeholder="31XXXXXXXXXX" minLength="12" maxLength="12" className="w-full bg-neutral-950 border border-neutral-800 text-white p-5 rounded-2xl focus:border-red-500 outline-none text-center font-black text-xl tracking-[0.2em] placeholder:tracking-normal placeholder:text-neutral-800" />
               </div>
-
               <div>
                 <label className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2 block italic">UPLOAD SCREENSHOT</label>
                 <div className="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
-                  <input required type="file" accept="image/*" onChange={(e) => setPaymentProof(e.target.files[0])}
-                    className="w-full text-white text-xs font-black uppercase file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-red-600 file:text-white cursor-pointer" />
+                  <input required type="file" accept="image/*" onChange={(e) => setPaymentProof(e.target.files[0])} className="w-full text-white text-xs font-black uppercase file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-red-600 file:text-white cursor-pointer" />
                 </div>
               </div>
-
               <button type="submit" disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-5 rounded-2xl text-xl uppercase tracking-widest italic transition-transform active:scale-95 shadow-xl shadow-red-500/20">
                 {isSubmitting ? <span className="animate-pulse">{uploadStatus}</span> : "COMPLETE ORDER"}
               </button>

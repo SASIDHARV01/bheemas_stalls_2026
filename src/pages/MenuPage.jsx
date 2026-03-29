@@ -8,31 +8,235 @@ import { db } from '../firebase';
 
 const menuData = {
   biryani: [
-    { id: 'b1', category: 'Dum Biryani Section', name: 'Dum Biryani(2 Piece)+1 Cool Drink', price: 230, type: 'Non-Veg', desc: '2 Pieces + 1 Cool Drink', image: '/b1.jpeg' },
-    { id: 'b2', category: 'Dum Biryani Section', name: 'Dum Biryani(2 Piece)+ Any 1 Fruit Juice', price: 240, type: 'Non-Veg', desc: '2 Pieces + Any 1 Fruit Juice', image: '/2bj.jpeg' },
-    { id: 'b4', category: 'Fry Piece Biryani', name: 'Fry Biryani(2 Pieces) + 1 Cool Drink', price: 250, type: 'Non-Veg', desc: '2 Pieces + 1 Cool Drink', image: '/b1.jpeg' },
-    { id: 'b5', category: 'Fry Piece Biryani', name: 'Fry Biryani(2 Piece)+ Any 1 Fruit Juice', price: 260, type: 'Non-Veg', desc: 'Fry Biryani(2 Piece)+ Any 1 Fruit Juice', image: '/2bj.jpeg' },
-    { id: 'b7', category: 'Combo', name: 'Combo Biryani 1', price: 260, type: 'Non-Veg', desc: '1 Fry + 1 Dum Piece', image: '/c1.jpeg' },
-    { id: 'b7', category: 'Combo', name: 'Combo Biryani 2', price: 700, type: 'Non-Veg', desc: '3-2Piece Dum Biryani + 1-1 Piece Biryani Free', image: '/images/fry-combo.jpg' },
-    { id: 'b7', category: 'Combo', name: 'Combo Biryani 3', price: 1250, type: 'Non-Veg', desc: '3-2Piece Dum Biryani + 1-2Piece Biryani + Any 2 Fruit Juices Free', image: '/images/fry-combo.jpg' }
+    // DUM BIRYANI SECTION
+    { id: 'b1', category: 'Dum Biryani Section', name: 'Dum Biryani (1 Piece)', price: 189, type: 'Non-Veg', desc: '1 Piece Dum Biryani', image: '/b1.jpeg' },
+    { id: 'b2', category: 'Dum Biryani Section', name: 'Dum Biryani (2 Pieces)', price: 209, type: 'Non-Veg', desc: '2 Pieces Dum Biryani', image: '/b1.jpeg' },
+    { id: 'b3', category: 'Dum Biryani Section', name: 'Dum Biryani (1 Piece + Juice)', price: 219, type: 'Non-Veg', desc: '1 Piece + 1 Fruit Juice', image: '/2bj.jpeg' },
+    { id: 'b4', category: 'Dum Biryani Section', name: 'Dum Biryani (2 Pieces + Drink)', price: 229, type: 'Non-Veg', desc: '2 Pieces + 1 Cool Drink', image: '/b1.jpeg' },
+    { id: 'b5', category: 'Dum Biryani Section', name: 'Dum Biryani (2 Pieces + Juice)', price: 239, type: 'Non-Veg', desc: '2 Pieces + 1 Fruit Juice', image: '/2bj.jpeg' },
+
+    // FRY BIRYANI SECTION
+    { id: 'b6', category: 'Fry Piece Biryani', name: 'Fry Biryani (2 Pieces)', price: 229, type: 'Non-Veg', desc: '2 Pieces Fry Biryani', image: '/b1.jpeg' },
+    { id: 'b7', category: 'Fry Piece Biryani', name: 'Fry Biryani (2 Pieces + Drink)', price: 249, type: 'Non-Veg', desc: '2 Pieces + 1 Cool Drink', image: '/b1.jpeg' },
+    { id: 'b8', category: 'Fry Piece Biryani', name: 'Fry Biryani (2 Pieces + Juice)', price: 259, type: 'Non-Veg', desc: '2 Pieces + 1 Fruit Juice', image: '/2bj.jpeg' },
+
+    // COMBO SECTION
+    { id: 'b9', category: 'Combo', name: 'Biryani (1 Dum Pcs + 1 Fry Pcs)', price: 259, type: 'Non-Veg', desc: '1 Dum Piece + 1 Fry Piece', image: '/c1.jpeg' },
+    { id: 'b10', category: 'Combo', name: 'Dum Biryani (2 Pcs) 3+1 Combo', price: 699, type: 'Non-Veg', desc: 'Buy 3 Get 1 Free + 1 Juice', image: '/c1.webp' },
+    { id: 'b11', category: 'Combo', name: 'Dum Biryani (2 Pcs) 5+1 Combo', price: 1250, type: 'Non-Veg', desc: 'Buy 5 Get 1 Free + 2 Juices', image: '/c3.jpg' },
+    { id: 'b12', category: 'Combo', name: 'Fry Biryani (2 Pcs) 3+1 Combo', price: 749, type: 'Non-Veg', desc: 'Buy 3 Get 1 Free + 1 Juice', image: '/c1.webp' },
+    { id: 'b13', category: 'Combo', name: 'Fry Biryani (2 Pcs) 5+1 Combo', price: 1350, type: 'Non-Veg', desc: 'Buy 5 Get 1 Free + 2 Juices', image: '/c3.jpg' }
   ],
   fruitjuice: [
-    { id: 'j1', category: 'Juice Section', name: 'Banana Juice', price: 70, type: 'Drink', desc: 'Fresh & Creamy', image: '/banana.jpg' },
-    { id: 'j2', category: 'Juice Section', name: 'Musk Melon Juice', price: 80, type: 'Drink', desc: 'Refreshing summer cooler', image: '/muskmelon.jpg' },
-    { id: 'j3', category: 'Juice Section', name: 'Pineapple Juice', price: 80, type: 'Drink', desc: 'Sweet and tangy', image: '/pineapple.jpeg' },
-    { id: 'j4', category: 'Juice Section', name: 'Watermelon Juice', price: 70, type: 'Drink', desc: 'Hydrating fresh juice', image: '/watermelon.avif' },
-    { id: 'j5', category: 'Juice Section', name: 'Grape Juice', price: 80, type: 'Drink', desc: 'Rich grape flavor', image: '/grapejuice.jpeg' },
-    { id: 'j6', category: 'Salads Section', name: 'Fruit Salad', price: 50, type: 'Veg', desc: 'Mixed seasonal fruits', image: '/salad.jpg' },
-    { id: 'j7', category: 'ThickShakes', name: 'Oreo Shake', price: 110, type: 'Drink', desc: 'Classic crushed Oreo blend', image: '/oreoshake.jpg' },
-    { id: 'j8', category: 'ThickShakes', name: 'Kit-Kat Shake', price: 110, type: 'Drink', desc: 'Chocolatey wafer goodness', image: '/kitkat.jpg' },
-    { id: 'j9', category: 'ThickShakes', name: 'Pista Shake', price: 120, type: 'Drink', desc: 'Premium pistachio blend', image: '/pista.webp' },
-    { id: 'j10', category: 'ThickShakes', name: 'Chocolate Cake Shake', price: 120, type: 'Drink', desc: 'Rich cake blended shake', image: '/chocolate.jpg' },
-    { id: 'j11', category: 'ThickShakes', name: 'Vanilla Shake', price: 110, type: 'Drink', desc: 'Rich Flavoured delight', image: '/vanilla.jpeg' }
+    // FRESH JUICES
+    { id: 'j1', category: 'Fresh Juices', name: 'Banana Juice', price: 70, type: 'Drink', desc: 'Fresh & Creamy', image: '/banana.jpg' },
+    { id: 'j2', category: 'Fresh Juices', name: 'Musk-Melon Juice', price: 80, type: 'Drink', desc: 'Refreshing summer cooler', image: '/muskmelon.jpg' },
+    { id: 'j3', category: 'Fresh Juices', name: 'Pineapple Juice', price: 80, type: 'Drink', desc: 'Sweet and tangy', image: '/pineapple.jpeg' },
+    { id: 'j4', category: 'Fresh Juices', name: 'Watermelon Juice', price: 70, type: 'Drink', desc: 'Hydrating fresh juice', image: '/watermelon.avif' },
+    { id: 'j5', category: 'Fresh Juices', name: 'Grape Juice', price: 80, type: 'Drink', desc: 'Rich grape flavor', image: '/grapejuice.jpeg' },
+    { id: 'j16', category: 'Fresh Juices', name: 'Sapota Juice', price: 80, type: 'Drink', desc: 'Sweet and delicious', image: '/sapota.avif' },
+    { id: 'j6', category: 'Fresh Juices', name: 'Fruit Salad', price: 50, type: 'Veg', desc: 'Mixed seasonal fruits', image: '/salad.jpg' },
+
+    // THICKSHAKES
+    { id: 'j7', category: 'Thickshakes', name: 'Oreo Shake', price: 100, type: 'Drink', desc: 'Classic crushed Oreo blend', image: '/oreoshake.jpg' },
+    { id: 'j8', category: 'Thickshakes', name: 'Kit-Kat Shake', price: 100, type: 'Drink', desc: 'Chocolatey wafer goodness', image: '/kitkat.jpg' },
+    { id: 'j9', category: 'Thickshakes', name: 'Vanilla Shake', price: 110, type: 'Drink', desc: 'Rich Flavoured delight', image: '/vanilla.jpeg' },
+    { id: 'j10', category: 'Thickshakes', name: 'Chocolate Shake', price: 110, type: 'Drink', desc: 'Rich chocolate blend', image: '/chocolate.jpg' },
+    { id: 'j11', category: 'Thickshakes', name: 'Pista Shake', price: 120, type: 'Drink', desc: 'Premium pistachio blend', image: '/pista.webp' },
+
+    // COMBOS
+    { id: 'j12', category: 'Combos', name: '5+1 Any Juice Combo', price: 300, type: 'Drink', desc: 'Buy 5 Get 1 Free (Juices)', image: '/banana.jpg' },
+    { id: 'j13', category: 'Combos', name: '5+1 Any Shake Combo', price: 450, type: 'Drink', desc: 'Buy 5 Get 1 Free (Shakes)', image: '/oreoshake.jpg' },
+    { id: 'j14', category: 'Combos', name: '10+3 Any Juice Combo', price: 600, type: 'Drink', desc: 'Buy 10 Get 3 Free (Juices)', image: '/pineapple.jpeg' },
+    { id: 'j15', category: 'Combos', name: '10+3 Any Shake Combo', price: 900, type: 'Drink', desc: 'Buy 10 Get 3 Free (Shakes)', image: '/chocolate.jpg' }
   ],
   fastfood: [
     { id: 'f1', category: 'Noodles', name: 'Chicken Noodles', price: 100, type: 'Non-Veg', desc: 'Spicy wok-tossed noodles.', image: '/images/noodles.jpg' },
     { id: 'f2', category: 'Starters', name: 'Veg Manchurian', price: 80, type: 'Veg', desc: 'Crispy veg balls in dark soy sauce.', image: '/images/manchurian.jpg' },
-  ]
+  ],
+  soda: [
+  // --- Sodas Section ---
+  { 
+    id: 's1', 
+    category: 'Sodas Section', 
+    name: 'Lemon Soda', 
+    price: 1, 
+    type: 'Veg', 
+    desc: 'Refreshing Chilled Lemon Soda', 
+    image: '/lemon-soda.jpg' 
+  },
+  { 
+    id: 's2', 
+    category: 'Sodas Section', 
+    name: 'Blue Berry Soda', 
+    price: 30, 
+    type: 'Veg', 
+    desc: 'Chilled Blue Berry Sparkler', 
+    image: '/blue-berry-soda.jpg' 
+  },
+  { 
+    id: 's3', 
+    category: 'Sodas Section', 
+    name: 'Pineapple Apple Soda', 
+    price: 30, 
+    type: 'Veg', 
+    desc: 'Unique Pineapple & Apple Mix', 
+    image: '/pineapple-soda.jpg' 
+  },
+  { 
+    id: 's4', 
+    category: 'Sodas Section', 
+    name: 'Sunanda Soda', 
+    price: 30, 
+    type: 'Veg', 
+    desc: 'Classic Sunanda Special', 
+    image: '/sugandha-soda.jpeg' 
+  },
+  { 
+    id: 's5', 
+    category: 'Sodas Section', 
+    name: 'Mint Soda', 
+    price: 30, 
+    type: 'Veg', 
+    desc: 'Fresh Mint Cooling Soda', 
+    image: '/mint-soda.jpeg' 
+  },
+  { 
+    id: 's6', 
+    category: 'Sodas Section', 
+    name: 'Orange Soda', 
+    price: 30, 
+    type: 'Veg', 
+    desc: 'Zesty Tangy Orange Soda', 
+    image: '/orange-soda.jpg' 
+  },
+
+  // --- Mojitos Section ---
+  { 
+    id: 'm1', 
+    category: 'Mojitos Section', 
+    name: 'Blue Lagoon', 
+    price: 70, 
+    type: 'Veg', 
+    desc: 'Deep Blue Tropical Mojito', 
+    image: '/BlueLagoonMojito.webp' 
+  },
+  { 
+    id: 'm2', 
+    category: 'Mojitos Section', 
+    name: 'Lemon Mint Mojito', 
+    price: 70, 
+    type: 'Veg', 
+    desc: 'Classic Lemon & Mint Mojito', 
+    image: '/LemonMint.jpg' 
+  },
+  { 
+    id: 'm3', 
+    category: 'Mojitos Section', 
+    name: 'Red Cherry Mojito', 
+    price: 80, 
+    type: 'Veg', 
+    desc: 'Sweet & Tart Red Cherry Mojito', 
+    image: '/RedCherryMojito.jpg' 
+  },
+  { 
+    id: 'm4', 
+    category: 'Mojitos Section', 
+    name: 'Green Mint Mojito', 
+    price: 70, 
+    type: 'Veg', 
+    desc: 'Extra Fresh Green Mint Mojito', 
+    image: '/GreenMintMojito.webp' 
+  }
+],
+fastfood: [
+  // --- Fried Rice Section ---
+  { 
+    id: 'f1', 
+    category: 'Fried Rice Section', 
+    name: 'Egg Fried Rice', 
+    price: 120, 
+    type: 'Non-Veg', 
+    desc: 'Classic wok-tossed egg fried rice', 
+    image: '/EggFriedRice.jpg' 
+  },
+  { 
+    id: 'f2', 
+    category: 'Fried Rice Section', 
+    name: 'Chicken Fried Rice', 
+    price: 1, 
+    type: 'Non-Veg', 
+    desc: 'Savory chicken chunks with seasoned rice', 
+    image: '/ChickenFriedRice.jpg' 
+  },
+  { 
+    id: 'f3', 
+    category: 'Fried Rice Section', 
+    name: 'Sp. Chicken Fried Rice', 
+    price: 150, 
+    type: 'Non-Veg', 
+    desc: 'Bheema’s Special double-egg chicken fried rice', 
+    image: '/SpChickenFriedRice.avif' 
+  },
+
+  // --- Noodles Section ---
+  { 
+    id: 'f4', 
+    category: 'Noodles Section', 
+    name: 'Egg Noodles', 
+    price: 120, 
+    type: 'Non-Veg', 
+    desc: 'Spicy street-style egg noodles', 
+    image: '/EggNoodles.webp' 
+  },
+  { 
+    id: 'f5', 
+    category: 'Noodles Section', 
+    name: 'Chicken Noodles', 
+    price: 140, 
+    type: 'Non-Veg', 
+    desc: 'Wok-tossed noodles with tender chicken strips', 
+    image: '/ChickenNoodles.jpg' 
+  },
+  { 
+    id: 'f6', 
+    category: 'Noodles Section', 
+    name: 'Sp Chicken Noodles', 
+    price: 150, 
+    type: 'Non-Veg', 
+    desc: 'Extra spicy special chicken noodles', 
+    image: '/SpChickenNoodles.jpg' 
+  },
+
+  // --- Manchuria Section ---
+  { 
+    id: 'f7', 
+    category: 'Manchuria Section', 
+    name: 'Egg Manchuria', 
+    price: 120, 
+    type: 'Non-Veg', 
+    desc: 'Crispy egg balls in spicy Manchurian sauce', 
+    image: '/EggManchuria.cms' 
+  },
+  { 
+    id: 'f8', 
+    category: 'Manchuria Section', 
+    name: 'Chicken Manchuria', 
+    price: 140, 
+    type: 'Non-Veg', 
+    desc: 'Golden fried chicken in tangy sauce', 
+    image: '/ChickenManchuria.webp' 
+  },
+  { 
+    id: 'f9', 
+    category: 'Manchuria Section', 
+    name: 'Sp Chicken Manchuria', 
+    price: 150, 
+    type: 'Non-Veg', 
+    desc: 'Premium Bheema special spicy Manchuria', 
+    image: '/SpChickenManchuria.jpg' 
+  }
+]
 };
 
 const MenuPage = () => {
