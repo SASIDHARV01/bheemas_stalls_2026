@@ -60,7 +60,7 @@ const menuData = {
     id: 's1', 
     category: 'Sodas Section', 
     name: 'Lemon Soda', 
-    price: 1, 
+    price: 30, 
     type: 'Veg', 
     desc: 'Refreshing Chilled Lemon Soda', 
     image: '/lemon-soda.jpg' 
@@ -164,7 +164,7 @@ fastfood: [
     id: 'f2', 
     category: 'Fried Rice Section', 
     name: 'Chicken Fried Rice', 
-    price: 1, 
+    price: 140, 
     type: 'Non-Veg', 
     desc: 'Savory chicken chunks with seasoned rice', 
     image: '/ChickenFriedRice.jpg' 
